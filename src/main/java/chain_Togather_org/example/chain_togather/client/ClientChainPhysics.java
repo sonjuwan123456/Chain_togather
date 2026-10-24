@@ -7,6 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -46,6 +48,11 @@ public final class ClientChainPhysics {
     }
 
     public static Vec3 anchor(Entity entity, float partialTick) {
+        if (entity instanceof Player player) {
+            Pose pose = player.getPose();
+            if (pose == Pose.STANDING || pose == Pose.CROUCHING) return RestraintBeltLayer.ringPosition(player, partialTick);
+            return player.getPosition(partialTick).add(0.0, player.getBbHeight() * 0.5, 0.0);
+        }
         return entity.getPosition(partialTick).add(0.0, entity.getBbHeight() * 0.55, 0.0);
     }
 

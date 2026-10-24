@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -23,7 +22,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
@@ -36,7 +34,6 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +42,6 @@ public final class ChainEvents {
     private static boolean sharingEffect;
     private static boolean dyingTogether;
     private static boolean followingDimension;
-    private static final Set<ChainLink> tautLinks = new HashSet<>();
 
     private ChainEvents() {
     }
@@ -85,20 +81,11 @@ public final class ChainEvents {
                 catchFall(a, b);
                 catchFall(b, a);
             }
-            if (distance <= maxLength) {
-                tautLinks.remove(link);
-                continue;
-            }
+            if (distance <= maxLength) continue;
 
             if (distance > maxLength * 4) {
                 teleport(b, a);
                 continue;
-            }
-
-            if (tautLinks.add(link)) {
-                playChainSound(a, b, SoundEvents.CHAIN_HIT, 1.0F);
-            } else if (server.getTickCount() % 8 == 0) {
-                playChainSound(a, b, SoundEvents.CHAIN_STEP, 0.6F);
             }
 
             if (!(a instanceof Player)) pull(a, b, maxLength);
@@ -114,12 +101,6 @@ public final class ChainEvents {
 
     private static void catchFall(LivingEntity hanging, LivingEntity holder) {
         if (hanging.getY() < holder.getY() - 0.5) hanging.resetFallDistance();
-    }
-
-    private static void playChainSound(LivingEntity a, LivingEntity b, SoundEvent sound, float volume) {
-        Vec3 middle = a.position().add(b.position()).scale(0.5);
-        float pitch = 0.8F + a.getRandom().nextFloat() * 0.4F;
-        a.level().playSound(null, middle.x, middle.y + 1.0, middle.z, sound, SoundSource.PLAYERS, volume, pitch);
     }
 
     private static void teleport(LivingEntity entity, LivingEntity destination) {

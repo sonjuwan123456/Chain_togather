@@ -38,6 +38,7 @@ public class Config {
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) return;
         chainLength = CHAIN_LENGTH.get();
         pullStrength = PULL_STRENGTH.get();
         taskDamage = TASK_DAMAGE.get();
