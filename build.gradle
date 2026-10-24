@@ -96,6 +96,17 @@ tasks.named('jar', Jar).configure {
     }
 }
 
+tasks.register('deployMod', Copy) {
+    onlyIf { project.hasProperty('deployModsDir') }
+    from tasks.named('jar')
+    into { project.findProperty('deployModsDir') }
+    doFirst {
+        delete fileTree(project.findProperty('deployModsDir')) { include "${mod_id}-*.jar" }
+    }
+}
+
+tasks.named('build') { finalizedBy 'deployMod' }
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
