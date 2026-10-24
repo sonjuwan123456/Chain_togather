@@ -1,0 +1,9 @@
+{
+  "item.chain_togather.binding_chain": "Binding Chain",
+  "tooltip.chain_togather.binding_chain": "Right-click a player or mob to chain yourself to it",
+  "message.chain_togather.linked": "You are now chained to %s",
+  "message.chain_togather.already_linked": "You are already chained to %s",
+  "message.chain_togather.advancement": "%s completed [%s]! Chain durability -%s%% (%s%% left)",
+  "message.chain_togather.broken": "The chain broke! You are free.",
+  "message.chain_togather.died_together": "%s died, and the chain dragged you down too"
+}
