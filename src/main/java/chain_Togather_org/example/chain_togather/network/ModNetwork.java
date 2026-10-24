@@ -1,6 +1,7 @@
 package chain_Togather_org.example.chain_togather.network;
 
 import chain_Togather_org.example.chain_togather.Chain_togather;
+import chain_Togather_org.example.chain_togather.Config;
 import chain_Togather_org.example.chain_togather.chain.ChainData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -25,10 +26,14 @@ public final class ModNetwork {
     }
 
     public static void syncAll(MinecraftServer server) {
-        CHANNEL.send(new ChainSyncPacket(ChainData.get(server).allLinks()), PacketDistributor.ALL.noArg());
+        CHANNEL.send(packet(server), PacketDistributor.ALL.noArg());
     }
 
     public static void syncTo(ServerPlayer player) {
-        CHANNEL.send(new ChainSyncPacket(ChainData.get(player.server).allLinks()), PacketDistributor.PLAYER.with(player));
+        CHANNEL.send(packet(player.server), PacketDistributor.PLAYER.with(player));
+    }
+
+    private static ChainSyncPacket packet(MinecraftServer server) {
+        return new ChainSyncPacket(ChainData.get(server).allLinks(), Config.chainLength, Config.pullStrength);
     }
 }

@@ -12,7 +12,7 @@ public class Config {
 
     private static final ForgeConfigSpec.DoubleValue CHAIN_LENGTH = BUILDER.defineInRange("chainLength", 6.0, 2.0, 64.0);
 
-    private static final ForgeConfigSpec.DoubleValue PULL_STRENGTH = BUILDER.defineInRange("pullStrength", 0.15, 0.01, 2.0);
+    private static final ForgeConfigSpec.DoubleValue PULL_STRENGTH = BUILDER.defineInRange("pullStrength", 0.3, 0.01, 2.0);
 
     private static final ForgeConfigSpec.DoubleValue TASK_DAMAGE = BUILDER.defineInRange("taskDamage", 0.5, 0.0, 100.0);
 

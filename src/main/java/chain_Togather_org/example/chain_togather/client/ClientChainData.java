@@ -6,6 +6,8 @@ import java.util.List;
 
 public final class ClientChainData {
     private static List<ChainLink> links = List.of();
+    private static double chainLength = 6.0;
+    private static double pullStrength = 0.3;
 
     private ClientChainData() {
     }
@@ -14,7 +16,21 @@ public final class ClientChainData {
         return links;
     }
 
-    public static void setLinks(List<ChainLink> newLinks) {
+    public static double chainLength() {
+        return chainLength;
+    }
+
+    public static double pullStrength() {
+        return pullStrength;
+    }
+
+    public static void set(List<ChainLink> newLinks, double newChainLength, double newPullStrength) {
         links = List.copyOf(newLinks);
+        chainLength = newChainLength;
+        pullStrength = newPullStrength;
+    }
+
+    public static void clear() {
+        links = List.of();
     }
 }

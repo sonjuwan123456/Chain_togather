@@ -80,8 +80,11 @@ public final class ChainEvents {
             if (a == null || b == null || !a.isAlive() || !b.isAlive() || a.isSpectator() || b.isSpectator()) continue;
             if (a.level() != b.level()) continue;
 
-            Vec3 delta = b.position().subtract(a.position());
-            double distance = delta.length();
+            double distance = a.distanceTo(b);
+            if (distance > maxLength - 0.5) {
+                catchFall(a, b);
+                catchFall(b, a);
+            }
             if (distance <= maxLength) {
                 tautLinks.remove(link);
                 continue;
@@ -98,23 +101,25 @@ public final class ChainEvents {
                 playChainSound(a, b, SoundEvents.CHAIN_STEP, 0.6F);
             }
 
-            double strength = Math.min((distance - maxLength) * Config.pullStrength, 1.0);
-            Vec3 pull = delta.scale(strength / distance);
-            pull(a, pull);
-            pull(b, pull.reverse());
+            if (!(a instanceof Player)) pull(a, b, maxLength);
+            if (!(b instanceof Player)) pull(b, a, maxLength);
         }
+    }
+
+    private static void pull(LivingEntity entity, LivingEntity other, double maxLength) {
+        double share = ChainPhysics.share(entity, other);
+        entity.setDeltaMovement(ChainPhysics.constrain(entity.getDeltaMovement(), entity.position(), other.position(), share, maxLength, Config.pullStrength));
+        entity.hurtMarked = true;
+    }
+
+    private static void catchFall(LivingEntity hanging, LivingEntity holder) {
+        if (hanging.getY() < holder.getY() - 0.5) hanging.resetFallDistance();
     }
 
     private static void playChainSound(LivingEntity a, LivingEntity b, SoundEvent sound, float volume) {
         Vec3 middle = a.position().add(b.position()).scale(0.5);
         float pitch = 0.8F + a.getRandom().nextFloat() * 0.4F;
         a.level().playSound(null, middle.x, middle.y + 1.0, middle.z, sound, SoundSource.PLAYERS, volume, pitch);
-    }
-
-    private static void pull(LivingEntity entity, Vec3 impulse) {
-        entity.setDeltaMovement(impulse);
-        if (impulse.y > 0) entity.resetFallDistance();
-        entity.hurtMarked = true;
     }
 
     private static void teleport(LivingEntity entity, LivingEntity destination) {
