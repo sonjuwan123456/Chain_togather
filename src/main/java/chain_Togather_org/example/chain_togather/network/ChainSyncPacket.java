@@ -8,7 +8,7 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public record ChainSyncPacket(List<ChainLink> links, double chainLength, double pullStrength) {
+public record ChainSyncPacket(List<ChainLink> links, double chainLength, double pullStrength, double durability) {
     public void encode(FriendlyByteBuf buf) {
         buf.writeVarInt(links.size());
         for (ChainLink link : links) {
@@ -17,17 +17,18 @@ public record ChainSyncPacket(List<ChainLink> links, double chainLength, double 
         }
         buf.writeDouble(chainLength);
         buf.writeDouble(pullStrength);
+        buf.writeDouble(durability);
     }
 
     public static ChainSyncPacket decode(FriendlyByteBuf buf) {
         int size = buf.readVarInt();
         List<ChainLink> links = new ArrayList<>(size);
         for (int i = 0; i < size; i++) links.add(ChainLink.of(buf.readUUID(), buf.readUUID()));
-        return new ChainSyncPacket(links, buf.readDouble(), buf.readDouble());
+        return new ChainSyncPacket(links, buf.readDouble(), buf.readDouble(), buf.readDouble());
     }
 
     public void handle(CustomPayloadEvent.Context context) {
-        ClientChainData.set(links, chainLength, pullStrength);
+        ClientChainData.set(links, chainLength, pullStrength, durability);
         context.setPacketHandled(true);
     }
 }

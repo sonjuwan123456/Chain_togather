@@ -13,15 +13,19 @@ public class ClientConfig {
 
     private static final ForgeConfigSpec.DoubleValue CHAIN_SOUND_VOLUME = BUILDER.defineInRange("chainSoundVolume", 1.0, 0.0, 1.0);
 
+    private static final ForgeConfigSpec.BooleanValue DURABILITY_HUD = BUILDER.define("durabilityHud", true);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean chainSounds = true;
     public static float chainSoundVolume = 1.0F;
+    public static boolean durabilityHud = true;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
         if (event.getConfig().getSpec() != SPEC) return;
         chainSounds = CHAIN_SOUNDS.get();
         chainSoundVolume = CHAIN_SOUND_VOLUME.get().floatValue();
+        durabilityHud = DURABILITY_HUD.get();
     }
 }

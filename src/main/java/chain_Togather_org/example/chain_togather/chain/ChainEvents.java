@@ -130,8 +130,8 @@ public final class ChainEvents {
                 member.sendSystemMessage(Component.translatable("message.chain_togather.broken").withStyle(ChatFormatting.GREEN));
                 member.level().playSound(null, member.blockPosition(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 1.0F, 1.0F);
             }
-            ModNetwork.syncAll(player.server);
         }
+        ModNetwork.syncAll(player.server);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
