@@ -17,15 +17,15 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = Chain_togather.MODID, value = Dist.CLIENT)
 public final class ClientChainPhysics {
     private static final Map<ChainLink, RopeSimulation> ropes = new HashMap<>();
+    private static ClientLevel trackedLevel;
+    private static Map<UUID, Entity> trackedEntities = Map.of();
 
     private ClientChainPhysics() {
     }
@@ -34,15 +34,15 @@ public final class ClientChainPhysics {
         return ropes.get(link);
     }
 
-    public static Map<UUID, Entity> findEntities(ClientLevel level, List<ChainLink> links) {
-        Set<UUID> wanted = new HashSet<>();
-        for (ChainLink link : links) {
-            wanted.add(link.a());
-            wanted.add(link.b());
-        }
+    public static Map<UUID, Entity> trackedEntities(ClientLevel level) {
+        return level == trackedLevel ? trackedEntities : Map.of();
+    }
+
+    private static Map<UUID, Entity> findEntities(ClientLevel level, List<ChainLink> links) {
+        if (links.isEmpty()) return Map.of();
         Map<UUID, Entity> entities = new HashMap<>();
         for (Entity entity : level.entitiesForRendering()) {
-            if (wanted.contains(entity.getUUID())) entities.put(entity.getUUID(), entity);
+            if (ClientChainData.isChained(entity.getUUID())) entities.put(entity.getUUID(), entity);
         }
         return entities;
     }
@@ -63,7 +63,7 @@ public final class ClientChainPhysics {
         List<ChainLink> links = ClientChainData.links();
         if (self == null || event.player != self || minecraft.level == null || links.isEmpty() || self.isSpectator()) return;
 
-        Map<UUID, Entity> entities = findEntities(minecraft.level, links);
+        Map<UUID, Entity> entities = trackedEntities(minecraft.level);
         double maxLength = ClientChainData.chainLength();
         Vec3 velocity = self.getDeltaMovement();
         boolean changed = false;
@@ -90,28 +90,32 @@ public final class ClientChainPhysics {
     public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
-        List<ChainLink> links = ClientChainData.links();
         if (level == null || minecraft.isPaused()) return;
 
+        List<ChainLink> links = ClientChainData.links();
+        trackedLevel = level;
+        trackedEntities = findEntities(level, links);
         ropes.keySet().retainAll(links);
-        if (links.isEmpty()) return;
-        Map<UUID, Entity> entities = findEntities(level, links);
         double length = ClientChainData.chainLength();
 
         for (ChainLink link : links) {
-            Entity a = entities.get(link.a());
-            Entity b = entities.get(link.b());
+            Entity a = trackedEntities.get(link.a());
+            Entity b = trackedEntities.get(link.b());
             if (a == null || b == null) {
                 ropes.remove(link);
                 continue;
             }
             ropes.computeIfAbsent(link, key -> new RopeSimulation()).tick(level, anchor(a, 1.0F), anchor(b, 1.0F), length);
         }
+        ChainSounds.tick(level, links, trackedEntities);
     }
 
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientChainData.clear();
         ropes.clear();
+        trackedLevel = null;
+        trackedEntities = Map.of();
+        ChainSounds.clear();
     }
 }

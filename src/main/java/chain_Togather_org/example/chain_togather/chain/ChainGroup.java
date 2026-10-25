@@ -32,18 +32,6 @@ public class ChainGroup {
     final Set<ResourceLocation> countedAdvancements = new HashSet<>();
     double durability = 100.0;
 
-    public Set<UUID> members() {
-        return members;
-    }
-
-    public Set<ChainLink> links() {
-        return links;
-    }
-
-    public NonNullList<ItemStack> items() {
-        return items;
-    }
-
     public double durability() {
         return durability;
     }

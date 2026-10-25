@@ -13,7 +13,7 @@ public final class ChainPhysics {
     private ChainPhysics() {
     }
 
-    public static boolean isAnchored(Entity entity) {
+    private static boolean isAnchored(Entity entity) {
         return entity instanceof Player player && player.isCrouching() && player.onGround();
     }
 

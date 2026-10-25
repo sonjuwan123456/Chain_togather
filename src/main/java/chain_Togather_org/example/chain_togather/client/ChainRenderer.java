@@ -38,7 +38,7 @@ public final class ChainRenderer {
         List<ChainLink> links = ClientChainData.links();
         if (level == null || links.isEmpty()) return;
 
-        Map<UUID, Entity> entities = ClientChainPhysics.findEntities(level, links);
+        Map<UUID, Entity> entities = ClientChainPhysics.trackedEntities(level);
         float partialTick = minecraft.getTimer().getGameTimeDeltaPartialTick(true);
         Vec3 camera = event.getCamera().getPosition();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
@@ -50,7 +50,7 @@ public final class ChainRenderer {
             Entity a = entities.get(link.a());
             Entity b = entities.get(link.b());
             RopeSimulation rope = ClientChainPhysics.rope(link);
-            if (a == null || b == null || rope == null || rope.size() < 2) continue;
+            if (a == null || b == null || a.isRemoved() || b.isRemoved() || rope == null || rope.size() < 2) continue;
 
             int last = rope.size() - 1;
             Vec3 previous = ClientChainPhysics.anchor(a, partialTick);

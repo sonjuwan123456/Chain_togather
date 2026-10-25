@@ -2,7 +2,6 @@ package chain_Togather_org.example.chain_togather;
 
 import chain_Togather_org.example.chain_togather.item.ChainItem;
 import chain_Togather_org.example.chain_togather.network.ModNetwork;
-import com.mojang.logging.LogUtils;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -13,13 +12,11 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import org.slf4j.Logger;
 
 @Mod(Chain_togather.MODID)
 public class Chain_togather {
 
     public static final String MODID = "chain_togather";
-    public static final Logger LOGGER = LogUtils.getLogger();
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
 
     public static final RegistryObject<Item> BINDING_CHAIN = ITEMS.register("binding_chain", () -> new ChainItem(new Item.Properties().stacksTo(1)));
