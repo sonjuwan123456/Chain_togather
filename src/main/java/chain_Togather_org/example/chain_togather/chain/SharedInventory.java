@@ -3,6 +3,7 @@ package chain_Togather_org.example.chain_togather.chain;
 import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public final class SharedInventory {
         return changed;
     }
 
+    @Nullable
     private static ItemStack resolveSlot(ItemStack base, List<ServerPlayer> players, int slot) {
         ItemStack replacement = null;
         int countDelta = 0;
