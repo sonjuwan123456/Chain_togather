@@ -73,24 +73,29 @@ public final class ChainEvents {
         for (ChainLink link : group.links) {
             LivingEntity a = ChainGroup.find(server, link.a());
             LivingEntity b = ChainGroup.find(server, link.b());
-            if (a == null || b == null || !a.isAlive() || !b.isAlive() || a.isSpectator() || b.isSpectator()) continue;
-            if (a.level() != b.level()) continue;
-
-            double distance = a.distanceTo(b);
-            if (distance > maxLength - 0.5) {
-                catchFall(a, b);
-                catchFall(b, a);
-            }
-            if (distance <= maxLength) continue;
-
-            if (distance > maxLength * 4) {
-                teleport(b, a);
-                continue;
-            }
-
-            if (!(a instanceof Player)) pull(a, b, maxLength);
-            if (!(b instanceof Player)) pull(b, a, maxLength);
+            if (canPull(a) && canPull(b) && a.level() == b.level()) pullLink(a, b, maxLength);
         }
+    }
+
+    private static boolean canPull(LivingEntity entity) {
+        return entity != null && entity.isAlive() && !entity.isSpectator();
+    }
+
+    private static void pullLink(LivingEntity a, LivingEntity b, double maxLength) {
+        double distance = a.distanceTo(b);
+        if (distance > maxLength - 0.5) {
+            catchFall(a, b);
+            catchFall(b, a);
+        }
+        if (distance <= maxLength) return;
+
+        if (distance > maxLength * 4) {
+            teleport(b, a);
+            return;
+        }
+
+        if (!(a instanceof Player)) pull(a, b, maxLength);
+        if (!(b instanceof Player)) pull(b, a, maxLength);
     }
 
     private static void pull(LivingEntity entity, LivingEntity other, double maxLength) {
@@ -144,10 +149,7 @@ public final class ChainEvents {
 
         List<LivingEntity> others = group.livingMembers(level.getServer());
         others.remove(dead);
-        ServerPlayer itemCarrier = dead instanceof ServerPlayer player ? player : null;
-        for (LivingEntity member : others) {
-            if (itemCarrier == null && member instanceof ServerPlayer player) itemCarrier = player;
-        }
+        ServerPlayer itemCarrier = findItemCarrier(dead, others);
 
         boolean keepInventory = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY);
         if (!keepInventory) group.items.clear();
@@ -155,15 +157,27 @@ public final class ChainEvents {
 
         dyingTogether = true;
         try {
-            for (LivingEntity member : others) {
-                if (member instanceof ServerPlayer player) {
-                    if (!keepInventory && player != itemCarrier) player.getInventory().items.clear();
-                    player.sendSystemMessage(Component.translatable("message.chain_togather.died_together", dead.getDisplayName()).withStyle(ChatFormatting.RED));
-                }
-                member.kill();
-            }
+            killTogether(dead, others, itemCarrier, keepInventory);
         } finally {
             dyingTogether = false;
+        }
+    }
+
+    private static ServerPlayer findItemCarrier(LivingEntity dead, List<LivingEntity> others) {
+        if (dead instanceof ServerPlayer player) return player;
+        for (LivingEntity member : others) {
+            if (member instanceof ServerPlayer player) return player;
+        }
+        return null;
+    }
+
+    private static void killTogether(LivingEntity dead, List<LivingEntity> others, ServerPlayer itemCarrier, boolean keepInventory) {
+        for (LivingEntity member : others) {
+            if (member instanceof ServerPlayer player) {
+                if (!keepInventory && player != itemCarrier) player.getInventory().items.clear();
+                player.sendSystemMessage(Component.translatable("message.chain_togather.died_together", dead.getDisplayName()).withStyle(ChatFormatting.RED));
+            }
+            member.kill();
         }
     }
 
