@@ -34,6 +34,6 @@ public final class ModNetwork {
     }
 
     private static ChainSyncPacket packet(MinecraftServer server) {
-        return new ChainSyncPacket(ChainData.get(server).allLinks(), Config.chainLength, Config.pullStrength);
+        return new ChainSyncPacket(ChainData.get(server).allLinks(), Config.getChainLength(), Config.getPullStrength());
     }
 }

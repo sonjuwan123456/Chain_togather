@@ -22,11 +22,22 @@ public class Config {
 
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    public static double chainLength;
-    public static double pullStrength;
+    private static double chainLength;
+    private static double pullStrength;
     private static double taskDamage;
     private static double goalDamage;
     private static double challengeDamage;
+
+    private Config() {
+    }
+
+    public static double getChainLength() {
+        return chainLength;
+    }
+
+    public static double getPullStrength() {
+        return pullStrength;
+    }
 
     public static double damageFor(AdvancementType type) {
         return switch (type) {

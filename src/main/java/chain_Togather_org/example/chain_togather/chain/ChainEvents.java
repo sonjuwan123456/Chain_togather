@@ -69,7 +69,7 @@ public final class ChainEvents {
     }
 
     private static void pullTogether(ChainGroup group, MinecraftServer server) {
-        double maxLength = Config.chainLength;
+        double maxLength = Config.getChainLength();
         for (ChainLink link : group.links) {
             LivingEntity a = ChainGroup.find(server, link.a());
             LivingEntity b = ChainGroup.find(server, link.b());
@@ -95,7 +95,7 @@ public final class ChainEvents {
 
     private static void pull(LivingEntity entity, LivingEntity other, double maxLength) {
         double share = ChainPhysics.share(entity, other);
-        entity.setDeltaMovement(ChainPhysics.constrain(entity.getDeltaMovement(), entity.position(), other.position(), share, maxLength, Config.pullStrength));
+        entity.setDeltaMovement(ChainPhysics.constrain(entity.getDeltaMovement(), entity.position(), other.position(), share, maxLength, Config.getPullStrength()));
         entity.hurtMarked = true;
     }
 
