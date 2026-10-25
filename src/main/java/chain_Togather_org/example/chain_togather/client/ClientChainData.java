@@ -12,7 +12,6 @@ public final class ClientChainData {
     private static Set<UUID> members = Set.of();
     private static double chainLength = 6.0;
     private static double pullStrength = 0.3;
-    private static double durability = -1.0;
 
     private ClientChainData() {
     }
@@ -33,11 +32,7 @@ public final class ClientChainData {
         return members.contains(id);
     }
 
-    public static double durability() {
-        return durability;
-    }
-
-    public static void set(List<ChainLink> newLinks, double newChainLength, double newPullStrength, double newDurability) {
+    public static void set(List<ChainLink> newLinks, double newChainLength, double newPullStrength) {
         links = List.copyOf(newLinks);
         Set<UUID> newMembers = new HashSet<>();
         for (ChainLink link : links) {
@@ -47,12 +42,10 @@ public final class ClientChainData {
         members = Set.copyOf(newMembers);
         chainLength = newChainLength;
         pullStrength = newPullStrength;
-        durability = newDurability;
     }
 
     public static void clear() {
         links = List.of();
         members = Set.of();
-        durability = -1.0;
     }
 }
