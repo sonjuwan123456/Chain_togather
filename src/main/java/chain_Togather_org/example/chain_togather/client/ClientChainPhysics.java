@@ -15,6 +15,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = Chain_togather.MODID, value = Dist.CLIENT)
 public final class ClientChainPhysics {
-    private static final Map<ChainLink, RopeSimulation> ropes = new HashMap<>();
+    private static final Map<ChainLink, RopeSimulation> ROPES = new HashMap<>();
     private static ClientLevel trackedLevel;
     private static Map<UUID, Entity> trackedEntities = Map.of();
 
@@ -31,7 +32,7 @@ public final class ClientChainPhysics {
     }
 
     public static RopeSimulation rope(ChainLink link) {
-        return ropes.get(link);
+        return ROPES.get(link);
     }
 
     public static Map<UUID, Entity> trackedEntities(ClientLevel level) {
@@ -69,12 +70,8 @@ public final class ClientChainPhysics {
         boolean changed = false;
 
         for (ChainLink link : links) {
-            UUID otherId;
-            if (link.a().equals(self.getUUID())) otherId = link.b();
-            else if (link.b().equals(self.getUUID())) otherId = link.a();
-            else continue;
-            Entity other = entities.get(otherId);
-            if (other == null || !other.isAlive()) continue;
+            Entity other = linkedOther(link, self.getUUID(), entities);
+            if (other == null) continue;
 
             double share = ChainPhysics.share(self, other);
             velocity = ChainPhysics.constrain(velocity, self.position(), other.position(), share, maxLength, ClientChainData.pullStrength());
@@ -86,6 +83,16 @@ public final class ClientChainPhysics {
         if (changed) self.setDeltaMovement(velocity);
     }
 
+    @Nullable
+    private static Entity linkedOther(ChainLink link, UUID selfId, Map<UUID, Entity> entities) {
+        UUID otherId;
+        if (link.a().equals(selfId)) otherId = link.b();
+        else if (link.b().equals(selfId)) otherId = link.a();
+        else return null;
+        Entity other = entities.get(otherId);
+        return other != null && other.isAlive() ? other : null;
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -95,17 +102,17 @@ public final class ClientChainPhysics {
         List<ChainLink> links = ClientChainData.links();
         trackedLevel = level;
         trackedEntities = findEntities(level, links);
-        ropes.keySet().retainAll(links);
+        ROPES.keySet().retainAll(links);
         double length = ClientChainData.chainLength();
 
         for (ChainLink link : links) {
             Entity a = trackedEntities.get(link.a());
             Entity b = trackedEntities.get(link.b());
             if (a == null || b == null) {
-                ropes.remove(link);
+                ROPES.remove(link);
                 continue;
             }
-            ropes.computeIfAbsent(link, key -> new RopeSimulation()).tick(level, anchor(a, 1.0F), anchor(b, 1.0F), length);
+            ROPES.computeIfAbsent(link, key -> new RopeSimulation()).tick(level, anchor(a, 1.0F), anchor(b, 1.0F), length);
         }
         ChainSounds.tick(level, links, trackedEntities);
     }
@@ -113,7 +120,7 @@ public final class ClientChainPhysics {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientChainData.clear();
-        ropes.clear();
+        ROPES.clear();
         trackedLevel = null;
         trackedEntities = Map.of();
         ChainSounds.clear();
