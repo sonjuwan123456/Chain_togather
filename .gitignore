@@ -20,3 +20,6 @@ hs_err_pid*
 # Common working directory
 run
 run-client2
+
+# bkit plugin state
+.bkit/
