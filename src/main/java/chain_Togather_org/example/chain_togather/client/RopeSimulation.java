@@ -44,21 +44,27 @@ public class RopeSimulation {
 
         double restLength = Math.max(length, start.distanceTo(end)) / (count - 1);
         for (int iteration = 0; iteration < ITERATIONS; iteration++) {
-            for (int i = 0; i < count - 1; i++) {
-                Vec3 delta = current[i + 1].subtract(current[i]);
-                double distance = delta.length();
-                if (distance < 1.0E-6) continue;
-                Vec3 fix = delta.scale((distance - restLength) / distance);
-                if (i == 0) {
-                    current[i + 1] = current[i + 1].subtract(fix);
-                } else if (i + 1 == count - 1) {
-                    current[i] = current[i].add(fix);
-                } else {
-                    current[i] = current[i].add(fix.scale(0.5));
-                    current[i + 1] = current[i + 1].subtract(fix.scale(0.5));
-                }
-            }
+            satisfyConstraints(count, restLength);
             for (int i = 1; i < count - 1; i++) collide(level, i);
+        }
+    }
+
+    private void satisfyConstraints(int count, double restLength) {
+        for (int i = 0; i < count - 1; i++) {
+            Vec3 delta = current[i + 1].subtract(current[i]);
+            double distance = delta.length();
+            if (distance >= 1.0E-6) applyFix(i, delta.scale((distance - restLength) / distance), count);
+        }
+    }
+
+    private void applyFix(int i, Vec3 fix, int count) {
+        if (i == 0) {
+            current[i + 1] = current[i + 1].subtract(fix);
+        } else if (i + 1 == count - 1) {
+            current[i] = current[i].add(fix);
+        } else {
+            current[i] = current[i].add(fix.scale(0.5));
+            current[i + 1] = current[i + 1].subtract(fix.scale(0.5));
         }
     }
 
