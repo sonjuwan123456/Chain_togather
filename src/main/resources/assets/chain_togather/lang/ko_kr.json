@@ -1,8 +1,10 @@
 {
   "item.chain_togather.binding_chain": "결속의 사슬",
-  "tooltip.chain_togather.binding_chain": "플레이어나 몹을 우클릭하면 사슬로 연결됩니다",
+  "tooltip.chain_togather.binding_chain": "다른 플레이어를 우클릭하면 사슬로 연결됩니다",
   "message.chain_togather.linked": "%s 님과 사슬로 연결되었습니다",
   "message.chain_togather.already_linked": "이미 %s 님과 연결되어 있습니다",
+  "message.chain_togather.not_line_end": "한 줄 모드: 사슬의 끝끼리만 연결할 수 있습니다",
+  "message.chain_togather.would_close_loop": "한 줄 모드: %s 님과 연결하면 사슬이 고리가 됩니다",
   "message.chain_togather.advancement": "%s 님이 [%s] 달성! 사슬 내구도 -%s%% (남은 내구도 %s%%)",
   "message.chain_togather.broken": "사슬이 끊어졌습니다! 이제 자유입니다.",
   "message.chain_togather.died_together": "%s 님이 죽어 사슬에 묶인 당신도 함께 죽었습니다"

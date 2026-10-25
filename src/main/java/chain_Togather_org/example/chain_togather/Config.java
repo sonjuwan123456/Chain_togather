@@ -1,5 +1,6 @@
 package chain_Togather_org.example.chain_togather;
 
+import chain_Togather_org.example.chain_togather.chain.ChainMode;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -20,6 +21,8 @@ public class Config {
 
     private static final ForgeConfigSpec.DoubleValue CHALLENGE_DAMAGE = BUILDER.defineInRange("challengeDamage", 5.0, 0.0, 100.0);
 
+    private static final ForgeConfigSpec.EnumValue<ChainMode> CHAIN_MODE = BUILDER.defineEnum("chainMode", ChainMode.FREE);
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     private static double chainLength;
@@ -27,6 +30,7 @@ public class Config {
     private static double taskDamage;
     private static double goalDamage;
     private static double challengeDamage;
+    private static ChainMode chainMode = ChainMode.FREE;
 
     private Config() {
     }
@@ -37,6 +41,10 @@ public class Config {
 
     public static double getPullStrength() {
         return pullStrength;
+    }
+
+    public static ChainMode getChainMode() {
+        return chainMode;
     }
 
     public static double damageFor(AdvancementType type) {
@@ -55,5 +63,6 @@ public class Config {
         taskDamage = TASK_DAMAGE.get();
         goalDamage = GOAL_DAMAGE.get();
         challengeDamage = CHALLENGE_DAMAGE.get();
+        chainMode = CHAIN_MODE.get();
     }
 }

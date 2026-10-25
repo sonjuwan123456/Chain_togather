@@ -1,12 +1,10 @@
 package chain_Togather_org.example.chain_togather.chain;
 
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public final class ChainPhysics {
-    private static final double PLAYER_VOLUME = 0.6 * 0.6 * 1.8;
     private static final double ANCHOR_WEIGHT = 20.0;
     private static final double CLIMB_SPEED = 0.22;
 
@@ -18,15 +16,17 @@ public final class ChainPhysics {
     }
 
     public static double weight(Entity entity) {
-        if (entity instanceof Player) return isAnchored(entity) ? ANCHOR_WEIGHT : 1.0;
-        double volume = entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight();
-        return Mth.clamp(volume / PLAYER_VOLUME, 0.25, 8.0);
+        return isAnchored(entity) ? ANCHOR_WEIGHT : 1.0;
     }
 
     public static double share(Entity self, Entity other) {
         double selfWeight = weight(self);
         double otherWeight = weight(other);
         return otherWeight / (selfWeight + otherWeight);
+    }
+
+    public static Vec3 anchor(Entity entity) {
+        return entity.position().add(0.0, entity.getBbHeight() * 0.5, 0.0);
     }
 
     public static Vec3 constrain(Vec3 velocity, Vec3 self, Vec3 other, double share, double maxLength, double strength) {
@@ -41,8 +41,8 @@ public final class ChainPhysics {
         return velocity.subtract(outward.scale(correction));
     }
 
-    public static boolean canClimb(Entity self, Entity other, double maxLength) {
-        return !self.onGround() && other.getY() > self.getY() + 0.5 && self.distanceTo(other) > maxLength * 0.8;
+    public static boolean canClimb(Entity self, Vec3 target, double maxLength) {
+        return !self.onGround() && target.y > self.getY() + 0.5 && self.position().distanceTo(target) > maxLength * 0.8;
     }
 
     public static Vec3 climb(Vec3 velocity, Vec3 self, Vec3 other) {

@@ -18,13 +18,10 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
@@ -34,11 +31,14 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = ChainTogather.MODID)
 public final class ChainEvents {
+    private static final Map<ChainLink, ChainPath> PATHS = new HashMap<>();
     private static boolean sharingEffect;
     private static boolean dyingTogether;
     private static boolean followingDimension;
@@ -48,10 +48,10 @@ public final class ChainEvents {
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (!event.getItemStack().is(ChainTogather.BINDING_CHAIN.get()) || !(event.getTarget() instanceof LivingEntity target)) return;
+        if (!event.getItemStack().is(ChainTogather.BINDING_CHAIN.get()) || !(event.getTarget() instanceof Player target)) return;
         event.setCanceled(true);
-        if (event.getEntity() instanceof ServerPlayer self) {
-            ChainItem.link(self, target);
+        if (event.getEntity() instanceof ServerPlayer self && target instanceof ServerPlayer other) {
+            ChainItem.link(self, other);
             event.setCancellationResult(InteractionResult.CONSUME);
         } else {
             event.setCancellationResult(InteractionResult.SUCCESS);
@@ -62,46 +62,35 @@ public final class ChainEvents {
     public static void onServerTick(TickEvent.ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         ChainData data = ChainData.get(server);
+        if (data.removeNonPlayers(server)) ModNetwork.syncAll(server);
+        PATHS.keySet().retainAll(data.allLinks());
         for (ChainGroup group : data.groups()) {
             if (SharedInventory.sync(group, group.livingPlayers(server))) data.setDirty();
-            pullTogether(group, server);
+            holdTogether(group, server);
         }
     }
 
-    private static void pullTogether(ChainGroup group, MinecraftServer server) {
+    private static void holdTogether(ChainGroup group, MinecraftServer server) {
         double maxLength = Config.getChainLength();
         for (ChainLink link : group.links) {
             LivingEntity a = ChainGroup.find(server, link.a());
             LivingEntity b = ChainGroup.find(server, link.b());
-            if (canPull(a) && canPull(b) && a.level() == b.level()) pullLink(a, b, maxLength);
+            if (canHold(a) && canHold(b) && a.level() == b.level()) holdLink(link, a, b, maxLength);
         }
     }
 
-    private static boolean canPull(LivingEntity entity) {
+    private static boolean canHold(LivingEntity entity) {
         return entity != null && entity.isAlive() && !entity.isSpectator();
     }
 
-    private static void pullLink(LivingEntity a, LivingEntity b, double maxLength) {
-        double distance = a.distanceTo(b);
-        if (distance > maxLength - 0.5) {
+    private static void holdLink(ChainLink link, LivingEntity a, LivingEntity b, double maxLength) {
+        ChainPath path = PATHS.computeIfAbsent(link, key -> new ChainPath());
+        path.update(a.level(), ChainPhysics.anchor(a), ChainPhysics.anchor(b));
+        if (path.length() > maxLength - 0.5) {
             catchFall(a, b);
             catchFall(b, a);
         }
-        if (distance <= maxLength) return;
-
-        if (distance > maxLength * 4) {
-            teleport(b, a);
-            return;
-        }
-
-        if (!(a instanceof Player)) pull(a, b, maxLength);
-        if (!(b instanceof Player)) pull(b, a, maxLength);
-    }
-
-    private static void pull(LivingEntity entity, LivingEntity other, double maxLength) {
-        double share = ChainPhysics.share(entity, other);
-        entity.setDeltaMovement(ChainPhysics.constrain(entity.getDeltaMovement(), entity.position(), other.position(), share, maxLength, Config.getPullStrength()));
-        entity.hurtMarked = true;
+        if (a.distanceTo(b) > maxLength * 4) teleport(b, a);
     }
 
     private static void catchFall(LivingEntity hanging, LivingEntity holder) {
@@ -181,19 +170,6 @@ public final class ChainEvents {
         }
     }
 
-    @SubscribeEvent
-    public static void onLeaveLevel(EntityLeaveLevelEvent event) {
-        Entity entity = event.getEntity();
-        if (entity instanceof Player || !(event.getLevel() instanceof ServerLevel level)) return;
-        Entity.RemovalReason reason = entity.getRemovalReason();
-        if (reason == null || !reason.shouldDestroy()) return;
-
-        ChainData data = ChainData.get(level.getServer());
-        if (data.groupOf(entity.getUUID()) == null) return;
-        data.removeMember(entity.getUUID());
-        ModNetwork.syncAll(level.getServer());
-    }
-
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onEffectAdded(MobEffectEvent.Added event) {
         LivingEntity entity = event.getEntity();
@@ -267,12 +243,5 @@ public final class ChainEvents {
         } finally {
             followingDimension = false;
         }
-    }
-
-    @SubscribeEvent
-    public static void onTravelToDimension(EntityTravelToDimensionEvent event) {
-        Entity entity = event.getEntity();
-        if (followingDimension || entity instanceof Player || !(entity.level() instanceof ServerLevel level)) return;
-        if (ChainData.get(level.getServer()).groupOf(entity.getUUID()) != null) event.setCanceled(true);
     }
 }

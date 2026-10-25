@@ -4,6 +4,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -13,6 +14,10 @@ public class RopeSimulation {
     private static final double DAMPING = 0.96;
     private static final int ITERATIONS = 10;
     private static final double RESET_DISTANCE = 8.0;
+    private static final double CLEARANCE = 0.03;
+    private static final Direction[] EXIT_ORDER = {
+            Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.DOWN
+    };
 
     private Vec3[] current = new Vec3[0];
     private Vec3[] previous = new Vec3[0];
@@ -69,15 +74,42 @@ public class RopeSimulation {
     }
 
     private void collide(ClientLevel level, int index) {
-        Vec3 node = current[index];
-        BlockPos pos = BlockPos.containing(node);
+        BlockPos pos = BlockPos.containing(current[index]);
         VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos);
         if (shape.isEmpty()) return;
-        double top = pos.getY() + shape.max(Direction.Axis.Y) + 0.03;
-        if (node.y < top) {
-            current[index] = new Vec3(node.x, top, node.z);
-            previous[index] = new Vec3(previous[index].x, top, previous[index].z);
+        for (AABB box : shape.toAabbs()) {
+            AABB bounds = box.move(pos).inflate(CLEARANCE);
+            if (bounds.contains(current[index])) {
+                pushOut(level, pos, index, bounds);
+                return;
+            }
         }
+    }
+
+    private void pushOut(ClientLevel level, BlockPos pos, int index, AABB bounds) {
+        Vec3 node = current[index];
+        Direction exit = null;
+        double shallowest = Double.MAX_VALUE;
+        for (Direction direction : EXIT_ORDER) {
+            Direction.Axis axis = direction.getAxis();
+            double depth = direction.getAxisDirection() == Direction.AxisDirection.POSITIVE
+                    ? bounds.max(axis) - node.get(axis)
+                    : node.get(axis) - bounds.min(axis);
+            if (depth < shallowest && !isFullBlock(level, pos.relative(direction))) {
+                shallowest = depth;
+                exit = direction;
+            }
+        }
+        if (exit == null) return;
+
+        Direction.Axis axis = exit.getAxis();
+        double surface = exit.getAxisDirection() == Direction.AxisDirection.POSITIVE ? bounds.max(axis) : bounds.min(axis);
+        current[index] = node.with(axis, surface);
+        previous[index] = previous[index].with(axis, surface);
+    }
+
+    private static boolean isFullBlock(ClientLevel level, BlockPos pos) {
+        return level.getBlockState(pos).isCollisionShapeFullBlock(level, pos);
     }
 
     private void reset(Vec3 start, Vec3 end, int count) {

@@ -2,6 +2,7 @@ package chain_Togather_org.example.chain_togather.client;
 
 import chain_Togather_org.example.chain_togather.ChainTogather;
 import chain_Togather_org.example.chain_togather.chain.ChainLink;
+import chain_Togather_org.example.chain_togather.chain.ChainPath;
 import chain_Togather_org.example.chain_togather.chain.ChainPhysics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = ChainTogather.MODID, value = Dist.CLIENT)
 public final class ClientChainPhysics {
     private static final Map<ChainLink, RopeSimulation> ROPES = new HashMap<>();
+    private static final Map<ChainLink, ChainPath> PATHS = new HashMap<>();
     private static ClientLevel trackedLevel;
     private static Map<UUID, Entity> trackedEntities = Map.of();
 
@@ -73,14 +75,27 @@ public final class ClientChainPhysics {
             Entity other = linkedOther(link, self.getUUID(), entities);
             if (other == null) continue;
 
+            Vec3 target = pullTarget(link, self, other);
             double share = ChainPhysics.share(self, other);
-            velocity = ChainPhysics.constrain(velocity, self.position(), other.position(), share, maxLength, ClientChainData.pullStrength());
-            if (self.input.jumping && ChainPhysics.canClimb(self, other, maxLength)) {
-                velocity = ChainPhysics.climb(velocity, self.position(), other.position());
+            velocity = ChainPhysics.constrain(velocity, self.position(), target, share, maxLength, ClientChainData.pullStrength());
+            if (self.input.jumping && ChainPhysics.canClimb(self, target, maxLength)) {
+                velocity = ChainPhysics.climb(velocity, self.position(), target);
             }
             changed = true;
         }
         if (changed) self.setDeltaMovement(velocity);
+    }
+
+    private static Vec3 pullTarget(ChainLink link, Entity self, Entity other) {
+        ChainPath path = PATHS.get(link);
+        if (path == null) return other.position();
+        Vec3 direction = link.a().equals(self.getUUID()) ? path.directionFromStart() : path.directionFromEnd();
+        return self.position().add(direction.scale(path.length()));
+    }
+
+    public static double chainDistance(ChainLink link, Entity a, Entity b) {
+        ChainPath path = PATHS.get(link);
+        return path == null ? a.distanceTo(b) : path.length();
     }
 
     @Nullable
@@ -103,6 +118,7 @@ public final class ClientChainPhysics {
         trackedLevel = level;
         trackedEntities = findEntities(level, links);
         ROPES.keySet().retainAll(links);
+        PATHS.keySet().retainAll(links);
         double length = ClientChainData.chainLength();
 
         for (ChainLink link : links) {
@@ -110,9 +126,13 @@ public final class ClientChainPhysics {
             Entity b = trackedEntities.get(link.b());
             if (a == null || b == null) {
                 ROPES.remove(link);
+                PATHS.remove(link);
                 continue;
             }
-            ROPES.computeIfAbsent(link, key -> new RopeSimulation()).tick(level, anchor(a, 1.0F), anchor(b, 1.0F), length);
+            Vec3 start = anchor(a, 1.0F);
+            Vec3 end = anchor(b, 1.0F);
+            ROPES.computeIfAbsent(link, key -> new RopeSimulation()).tick(level, start, end, length);
+            PATHS.computeIfAbsent(link, key -> new ChainPath()).update(level, start, end);
         }
         ChainSounds.tick(level, links, trackedEntities);
     }
@@ -121,6 +141,7 @@ public final class ClientChainPhysics {
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientChainData.clear();
         ROPES.clear();
+        PATHS.clear();
         trackedLevel = null;
         trackedEntities = Map.of();
         ChainSounds.clear();

@@ -36,6 +36,14 @@ public class ChainGroup {
         return durability;
     }
 
+    int linkCount(UUID member) {
+        int count = 0;
+        for (ChainLink link : links) {
+            if (link.a().equals(member) || link.b().equals(member)) count++;
+        }
+        return count;
+    }
+
     public List<LivingEntity> livingMembers(MinecraftServer server) {
         List<LivingEntity> result = new ArrayList<>();
         for (UUID id : members) {

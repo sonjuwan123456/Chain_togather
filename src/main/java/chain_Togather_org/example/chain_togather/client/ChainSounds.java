@@ -43,7 +43,7 @@ public final class ChainSounds {
     }
 
     private static void tickLink(ClientLevel level, ChainLink link, Entity a, Entity b, double maxLength, long tick) {
-        double distance = a.distanceTo(b);
+        double distance = ClientChainPhysics.chainDistance(link, a, b);
         if (distance < maxLength - 1.0) TAUT_LINKS.remove(link);
         if (distance <= maxLength || distance > maxLength * 4) return;
 

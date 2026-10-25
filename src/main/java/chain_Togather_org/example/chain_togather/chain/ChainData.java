@@ -1,6 +1,7 @@
 package chain_Togather_org.example.chain_togather.chain;
 
 import chain_Togather_org.example.chain_togather.ChainTogather;
+import chain_Togather_org.example.chain_togather.Config;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -8,7 +9,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class ChainData extends SavedData {
     private final List<ChainGroup> groups = new ArrayList<>();
     private final Map<UUID, ChainGroup> byMember = new HashMap<>();
 
-    public enum LinkResult { LINKED, ALREADY_LINKED }
+    public enum LinkResult { LINKED, ALREADY_LINKED, NOT_LINE_END, WOULD_CLOSE_LOOP }
 
     public static ChainData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, ChainTogather.MODID);
@@ -48,23 +49,27 @@ public class ChainData extends SavedData {
         return result;
     }
 
-    public LinkResult link(ServerPlayer self, LivingEntity target) {
+    public LinkResult link(ServerPlayer self, ServerPlayer target) {
         ChainGroup selfGroup = byMember.get(self.getUUID());
         ChainGroup targetGroup = byMember.get(target.getUUID());
         ChainLink link = ChainLink.of(self.getUUID(), target.getUUID());
+        boolean sameGroup = selfGroup != null && selfGroup == targetGroup;
 
-        if (selfGroup != null && selfGroup == targetGroup) {
-            if (!selfGroup.links.add(link)) return LinkResult.ALREADY_LINKED;
+        if (sameGroup && selfGroup.links.contains(link)) return LinkResult.ALREADY_LINKED;
+        LinkResult blocked = checkLineRule(sameGroup, self, target, selfGroup, targetGroup);
+        if (blocked != null) return blocked;
+
+        if (sameGroup) {
+            selfGroup.links.add(link);
             setDirty();
             return LinkResult.LINKED;
         }
 
         if (selfGroup != null) SharedInventory.sync(selfGroup, selfGroup.livingPlayers(self.server));
         if (targetGroup != null) SharedInventory.sync(targetGroup, targetGroup.livingPlayers(self.server));
-        if (target instanceof Mob mob) mob.setPersistenceRequired();
 
         List<ItemStack> overflow = new ArrayList<>();
-        LivingEntity overflowOwner = selfGroup == null && targetGroup != null ? self : target;
+        ServerPlayer overflowOwner = selfGroup == null && targetGroup != null ? self : target;
         ChainGroup group = joinGroups(self, target, selfGroup, targetGroup, overflow);
         group.links.add(link);
 
@@ -74,7 +79,20 @@ public class ChainData extends SavedData {
         return LinkResult.LINKED;
     }
 
-    private ChainGroup joinGroups(ServerPlayer self, LivingEntity target, @Nullable ChainGroup selfGroup, @Nullable ChainGroup targetGroup,
+    @Nullable
+    private static LinkResult checkLineRule(boolean sameGroup, ServerPlayer self, ServerPlayer target,
+                                            @Nullable ChainGroup selfGroup, @Nullable ChainGroup targetGroup) {
+        if (Config.getChainMode() != ChainMode.LINE) return null;
+        if (sameGroup) return LinkResult.WOULD_CLOSE_LOOP;
+        if (linkCount(selfGroup, self) >= 2 || linkCount(targetGroup, target) >= 2) return LinkResult.NOT_LINE_END;
+        return null;
+    }
+
+    private static int linkCount(@Nullable ChainGroup group, ServerPlayer player) {
+        return group == null ? 0 : group.linkCount(player.getUUID());
+    }
+
+    private ChainGroup joinGroups(ServerPlayer self, ServerPlayer target, @Nullable ChainGroup selfGroup, @Nullable ChainGroup targetGroup,
                                   List<ItemStack> overflow) {
         if (selfGroup == null && targetGroup == null) return createGroup(self, target, overflow);
         if (targetGroup == null) {
@@ -90,7 +108,7 @@ public class ChainData extends SavedData {
         return selfGroup;
     }
 
-    private ChainGroup createGroup(ServerPlayer self, LivingEntity target, List<ItemStack> overflow) {
+    private ChainGroup createGroup(ServerPlayer self, ServerPlayer target, List<ItemStack> overflow) {
         ChainGroup group = new ChainGroup();
         for (int slot = 0; slot < ChainGroup.SHARED_SLOTS; slot++) group.items.set(slot, self.getInventory().items.get(slot).copy());
         addMember(group, self.getUUID());
@@ -99,8 +117,8 @@ public class ChainData extends SavedData {
         return group;
     }
 
-    private void addTarget(ChainGroup group, LivingEntity target, List<ItemStack> overflow) {
-        if (target instanceof ServerPlayer targetPlayer) mergeItems(group, targetPlayer.getInventory().items, overflow);
+    private void addTarget(ChainGroup group, ServerPlayer target, List<ItemStack> overflow) {
+        mergeItems(group, target.getInventory().items, overflow);
         addMember(group, target.getUUID());
     }
 
@@ -120,6 +138,17 @@ public class ChainData extends SavedData {
         group.links.removeIf(link -> link.a().equals(member) || link.b().equals(member));
         if (group.links.isEmpty()) dissolve(group);
         setDirty();
+    }
+
+    public boolean removeNonPlayers(MinecraftServer server) {
+        List<UUID> nonPlayers = new ArrayList<>();
+        for (ChainGroup group : groups) {
+            for (LivingEntity member : group.livingMembers(server)) {
+                if (!(member instanceof Player)) nonPlayers.add(member.getUUID());
+            }
+        }
+        nonPlayers.forEach(this::removeMember);
+        return !nonPlayers.isEmpty();
     }
 
     public void dissolve(ChainGroup group) {
