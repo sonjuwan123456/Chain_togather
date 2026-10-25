@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -63,39 +64,53 @@ public class ChainData extends SavedData {
         if (target instanceof Mob mob) mob.setPersistenceRequired();
 
         List<ItemStack> overflow = new ArrayList<>();
-        LivingEntity overflowOwner = target;
-        ChainGroup group;
-        if (selfGroup == null && targetGroup == null) {
-            group = new ChainGroup();
-            for (int slot = 0; slot < ChainGroup.SHARED_SLOTS; slot++) group.items.set(slot, self.getInventory().items.get(slot).copy());
-            addMember(group, self.getUUID());
-            if (target instanceof ServerPlayer targetPlayer) mergeItems(group, targetPlayer.getInventory().items, overflow);
-            addMember(group, target.getUUID());
-            groups.add(group);
-        } else if (targetGroup == null) {
-            group = selfGroup;
-            if (target instanceof ServerPlayer targetPlayer) mergeItems(group, targetPlayer.getInventory().items, overflow);
-            addMember(group, target.getUUID());
-        } else if (selfGroup == null) {
-            group = targetGroup;
-            overflowOwner = self;
-            mergeItems(group, self.getInventory().items, overflow);
-            addMember(group, self.getUUID());
-        } else {
-            group = selfGroup;
-            mergeItems(group, targetGroup.items, overflow);
-            group.durability = Math.min(group.durability, targetGroup.durability);
-            group.countedAdvancements.addAll(targetGroup.countedAdvancements);
-            group.links.addAll(targetGroup.links);
-            for (UUID member : targetGroup.members) addMember(group, member);
-            groups.remove(targetGroup);
-        }
+        LivingEntity overflowOwner = selfGroup == null && targetGroup != null ? self : target;
+        ChainGroup group = joinGroups(self, target, selfGroup, targetGroup, overflow);
         group.links.add(link);
 
         for (ServerPlayer member : group.livingPlayers(self.server)) SharedInventory.applyTo(group, member);
         for (ItemStack stack : overflow) overflowOwner.spawnAtLocation(stack);
         setDirty();
         return LinkResult.LINKED;
+    }
+
+    private ChainGroup joinGroups(ServerPlayer self, LivingEntity target, @Nullable ChainGroup selfGroup, @Nullable ChainGroup targetGroup,
+                                  List<ItemStack> overflow) {
+        if (selfGroup == null && targetGroup == null) return createGroup(self, target, overflow);
+        if (targetGroup == null) {
+            addTarget(selfGroup, target, overflow);
+            return selfGroup;
+        }
+        if (selfGroup == null) {
+            mergeItems(targetGroup, self.getInventory().items, overflow);
+            addMember(targetGroup, self.getUUID());
+            return targetGroup;
+        }
+        absorbGroup(selfGroup, targetGroup, overflow);
+        return selfGroup;
+    }
+
+    private ChainGroup createGroup(ServerPlayer self, LivingEntity target, List<ItemStack> overflow) {
+        ChainGroup group = new ChainGroup();
+        for (int slot = 0; slot < ChainGroup.SHARED_SLOTS; slot++) group.items.set(slot, self.getInventory().items.get(slot).copy());
+        addMember(group, self.getUUID());
+        addTarget(group, target, overflow);
+        groups.add(group);
+        return group;
+    }
+
+    private void addTarget(ChainGroup group, LivingEntity target, List<ItemStack> overflow) {
+        if (target instanceof ServerPlayer targetPlayer) mergeItems(group, targetPlayer.getInventory().items, overflow);
+        addMember(group, target.getUUID());
+    }
+
+    private void absorbGroup(ChainGroup group, ChainGroup other, List<ItemStack> overflow) {
+        mergeItems(group, other.items, overflow);
+        group.durability = Math.min(group.durability, other.durability);
+        group.countedAdvancements.addAll(other.countedAdvancements);
+        group.links.addAll(other.links);
+        for (UUID member : other.members) addMember(group, member);
+        groups.remove(other);
     }
 
     public void removeMember(UUID member) {
@@ -133,7 +148,8 @@ public class ChainData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+    @NotNull
+    public CompoundTag save(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider provider) {
         ListTag list = new ListTag();
         groups.forEach(group -> list.add(group.save(provider)));
         tag.put("Groups", list);
