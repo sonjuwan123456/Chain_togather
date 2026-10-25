@@ -1,6 +1,35 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "minecraft:item/chain"
+  "parent": "chain_togather:entity/iron_belt",
+  "display": {
+    "gui": {
+      "rotation": [30, 225, 180],
+      "translation": [1, -0.7, 0],
+      "scale": [1, 1, 1]
+    },
+    "ground": {
+      "rotation": [0, 0, 180],
+      "translation": [0, 3, 0],
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "fixed": {
+      "rotation": [0, 180, 180],
+      "translation": [0, 0, 0],
+      "scale": [0.8, 0.8, 0.8]
+    },
+    "thirdperson_righthand": {
+      "rotation": [75, 45, 180],
+      "translation": [0, 2.5, 0],
+      "scale": [0.6, 0.6, 0.6]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 45, 180],
+      "translation": [0, 3, 0],
+      "scale": [0.7, 0.7, 0.7]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 225, 180],
+      "translation": [0, 3, 0],
+      "scale": [0.7, 0.7, 0.7]
+    }
   }
 }
