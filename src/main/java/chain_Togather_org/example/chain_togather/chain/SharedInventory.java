@@ -15,45 +15,47 @@ public final class SharedInventory {
         boolean changed = false;
 
         for (int slot = 0; slot < ChainGroup.SHARED_SLOTS; slot++) {
-            ItemStack base = group.items.get(slot);
-            ItemStack replacement = null;
-            int countDelta = 0;
-
-            for (ServerPlayer player : players) {
-                ItemStack current = player.getInventory().items.get(slot);
-                if (ItemStack.matches(current, base)) continue;
-
-                if (!base.isEmpty() && (current.isEmpty() || ItemStack.isSameItemSameComponents(current, base))) {
-                    countDelta += current.getCount() - base.getCount();
-                } else if (replacement == null) {
-                    replacement = current;
-                }
-            }
-
-            ItemStack result;
-            if (replacement != null) {
-                result = replacement.copy();
-            } else if (countDelta != 0) {
-                int count = Math.min(base.getCount() + countDelta, base.getMaxStackSize());
-                result = count > 0 ? base.copyWithCount(count) : ItemStack.EMPTY;
-            } else {
-                continue;
-            }
+            ItemStack result = resolveSlot(group.items.get(slot), players, slot);
+            if (result == null) continue;
 
             group.items.set(slot, result);
             changed = true;
-            for (ServerPlayer player : players) {
-                if (!ItemStack.matches(player.getInventory().items.get(slot), result)) player.getInventory().setItem(slot, result.copy());
-            }
+            for (ServerPlayer player : players) setIfDifferent(player, slot, result);
         }
         return changed;
     }
 
-    public static void applyTo(ChainGroup group, ServerPlayer player) {
-        for (int slot = 0; slot < ChainGroup.SHARED_SLOTS; slot++) {
-            ItemStack shared = group.items.get(slot);
-            if (!ItemStack.matches(player.getInventory().items.get(slot), shared)) player.getInventory().setItem(slot, shared.copy());
+    private static ItemStack resolveSlot(ItemStack base, List<ServerPlayer> players, int slot) {
+        ItemStack replacement = null;
+        int countDelta = 0;
+
+        for (ServerPlayer player : players) {
+            ItemStack current = player.getInventory().items.get(slot);
+            if (ItemStack.matches(current, base)) continue;
+
+            if (isCountChange(base, current)) {
+                countDelta += current.getCount() - base.getCount();
+            } else if (replacement == null) {
+                replacement = current;
+            }
         }
+
+        if (replacement != null) return replacement.copy();
+        if (countDelta == 0) return null;
+        int count = Math.min(base.getCount() + countDelta, base.getMaxStackSize());
+        return count > 0 ? base.copyWithCount(count) : ItemStack.EMPTY;
+    }
+
+    private static boolean isCountChange(ItemStack base, ItemStack current) {
+        return !base.isEmpty() && (current.isEmpty() || ItemStack.isSameItemSameComponents(current, base));
+    }
+
+    private static void setIfDifferent(ServerPlayer player, int slot, ItemStack stack) {
+        if (!ItemStack.matches(player.getInventory().items.get(slot), stack)) player.getInventory().setItem(slot, stack.copy());
+    }
+
+    public static void applyTo(ChainGroup group, ServerPlayer player) {
+        for (int slot = 0; slot < ChainGroup.SHARED_SLOTS; slot++) setIfDifferent(player, slot, group.items.get(slot));
     }
 
     public static ItemStack insert(NonNullList<ItemStack> items, ItemStack stack) {
