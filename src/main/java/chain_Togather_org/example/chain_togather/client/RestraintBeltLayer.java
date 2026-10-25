@@ -23,8 +23,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
+import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.NotNull;
 
 @Mod.EventBusSubscriber(modid = ChainTogather.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class RestraintBeltLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
@@ -61,7 +63,7 @@ public final class RestraintBeltLayer extends RenderLayer<AbstractClientPlayer, 
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource buffers, int light, AbstractClientPlayer player,
+    public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource buffers, int light, @NotNull AbstractClientPlayer player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
         if (player.isInvisible() || !ClientChainData.isChained(player.getUUID())) return;
 
@@ -74,7 +76,7 @@ public final class RestraintBeltLayer extends RenderLayer<AbstractClientPlayer, 
         poseStack.scale(-scale, -1.0F, scale);
         poseStack.translate(-0.5F, -0.5F, -0.5F);
         minecraft.getBlockRenderer().getModelRenderer().renderModel(poseStack.last(), buffers.getBuffer(Sheets.cutoutBlockSheet()), null, model,
-                1.0F, 1.0F, 1.0F, light, LivingEntityRenderer.getOverlayCoords(player, 0.0F));
+                1.0F, 1.0F, 1.0F, light, LivingEntityRenderer.getOverlayCoords(player, 0.0F), ModelData.EMPTY, null);
         poseStack.popPose();
     }
 
