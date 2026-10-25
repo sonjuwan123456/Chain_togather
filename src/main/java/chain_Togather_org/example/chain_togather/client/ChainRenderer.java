@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Quaternionf;
@@ -40,11 +42,9 @@ public final class ChainRenderer {
 
         Map<UUID, Entity> entities = ClientChainPhysics.trackedEntities(level);
         float partialTick = minecraft.getTimer().getGameTimeDeltaPartialTick(true);
-        Vec3 camera = event.getCamera().getPosition();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-        BlockRenderDispatcher blockRenderer = minecraft.getBlockRenderer();
-        BlockState chain = Blocks.CHAIN.defaultBlockState();
-        PoseStack poseStack = new PoseStack();
+        SegmentContext context = new SegmentContext(new PoseStack(), buffers, minecraft.getBlockRenderer(),
+                Blocks.CHAIN.defaultBlockState(), level, event.getCamera().getPosition());
 
         for (ChainLink link : links) {
             Entity a = entities.get(link.a());
@@ -56,27 +56,33 @@ public final class ChainRenderer {
             Vec3 previous = ClientChainPhysics.anchor(a, partialTick);
             for (int i = 1; i <= last; i++) {
                 Vec3 next = i == last ? ClientChainPhysics.anchor(b, partialTick) : rope.node(i, partialTick);
-                renderSegment(poseStack, buffers, blockRenderer, chain, level, camera, previous, next, i % 2 == 0);
+                renderSegment(context, previous, next, i % 2 == 0);
                 previous = next;
             }
         }
         buffers.endBatch();
     }
 
-    private static void renderSegment(PoseStack poseStack, MultiBufferSource buffers, BlockRenderDispatcher blockRenderer, BlockState chain,
-                                      ClientLevel level, Vec3 camera, Vec3 from, Vec3 to, boolean turned) {
+    private record SegmentContext(PoseStack poseStack, MultiBufferSource buffers, BlockRenderDispatcher blockRenderer,
+                                  BlockState chain, ClientLevel level, Vec3 camera) {
+    }
+
+    private static void renderSegment(SegmentContext context, Vec3 from, Vec3 to, boolean turned) {
         Vec3 direction = to.subtract(from);
         float length = (float) direction.length();
         if (length < 1.0E-4F) return;
 
-        int light = LevelRenderer.getLightColor(level, BlockPos.containing(from.lerp(to, 0.5)));
+        PoseStack poseStack = context.poseStack();
+        Vec3 camera = context.camera();
+        int light = LevelRenderer.getLightColor(context.level(), BlockPos.containing(from.lerp(to, 0.5)));
         poseStack.pushPose();
         poseStack.translate(from.x - camera.x, from.y - camera.y, from.z - camera.z);
         poseStack.mulPose(new Quaternionf().rotationTo(0.0F, 1.0F, 0.0F, (float) direction.x, (float) direction.y, (float) direction.z));
         poseStack.mulPose(new Quaternionf().rotationY(turned ? 0.0F : Mth.HALF_PI));
         poseStack.scale(1.0F, length, 1.0F);
         poseStack.translate(-0.5F, 0.0F, -0.5F);
-        blockRenderer.renderSingleBlock(chain, poseStack, buffers, light, OverlayTexture.NO_OVERLAY);
+        context.blockRenderer().renderSingleBlock(context.chain(), poseStack, context.buffers(), light, OverlayTexture.NO_OVERLAY,
+                ModelData.EMPTY, Sheets.cutoutBlockSheet());
         poseStack.popPose();
     }
 }
