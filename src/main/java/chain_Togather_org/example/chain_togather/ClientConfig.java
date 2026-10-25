@@ -15,8 +15,19 @@ public class ClientConfig {
 
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    public static boolean chainSounds = true;
-    public static float chainSoundVolume = 1.0F;
+    private static boolean chainSounds = true;
+    private static float chainSoundVolume = 1.0F;
+
+    private ClientConfig() {
+    }
+
+    public static boolean isChainSoundsEnabled() {
+        return chainSounds;
+    }
+
+    public static float getChainSoundVolume() {
+        return chainSoundVolume;
+    }
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {

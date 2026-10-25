@@ -26,7 +26,7 @@ public final class ChainSounds {
     static void tick(ClientLevel level, List<ChainLink> links, Map<UUID, Entity> entities) {
         tautLinks.retainAll(links);
         lastHitTick.keySet().retainAll(links);
-        if (links.isEmpty() || !ClientConfig.chainSounds || ClientConfig.chainSoundVolume <= 0.0F) return;
+        if (links.isEmpty() || !ClientConfig.isChainSoundsEnabled() || ClientConfig.getChainSoundVolume() <= 0.0F) return;
 
         double maxLength = ClientChainData.chainLength();
         long tick = level.getGameTime();
@@ -55,7 +55,7 @@ public final class ChainSounds {
     private static void play(ClientLevel level, Entity a, Entity b, SoundEvent sound, float volume) {
         Vec3 middle = ClientChainPhysics.anchor(a, 1.0F).add(ClientChainPhysics.anchor(b, 1.0F)).scale(0.5);
         float pitch = 0.9F + level.random.nextFloat() * 0.2F;
-        level.playLocalSound(middle.x, middle.y, middle.z, sound, SoundSource.PLAYERS, volume * ClientConfig.chainSoundVolume, pitch, false);
+        level.playLocalSound(middle.x, middle.y, middle.z, sound, SoundSource.PLAYERS, volume * ClientConfig.getChainSoundVolume(), pitch, false);
     }
 
     static void clear() {
