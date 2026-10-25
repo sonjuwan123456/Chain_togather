@@ -1,6 +1,6 @@
 package chain_Togather_org.example.chain_togather.chain;
 
-import chain_Togather_org.example.chain_togather.Chain_togather;
+import chain_Togather_org.example.chain_togather.ChainTogather;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -30,7 +30,7 @@ public class ChainData extends SavedData {
     public enum LinkResult { LINKED, ALREADY_LINKED }
 
     public static ChainData get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(FACTORY, Chain_togather.MODID);
+        return server.overworld().getDataStorage().computeIfAbsent(FACTORY, ChainTogather.MODID);
     }
 
     public List<ChainGroup> groups() {

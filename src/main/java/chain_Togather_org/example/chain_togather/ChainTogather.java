@@ -13,27 +13,27 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-@Mod(Chain_togather.MODID)
-public class Chain_togather {
+@Mod(ChainTogather.MODID)
+public class ChainTogather {
 
     public static final String MODID = "chain_togather";
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
 
     public static final RegistryObject<Item> BINDING_CHAIN = ITEMS.register("binding_chain", () -> new ChainItem(new Item.Properties().stacksTo(1)));
 
-    public Chain_togather(FMLJavaModLoadingContext context) {
+    public ChainTogather(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
 
         ITEMS.register(modEventBus);
         ModNetwork.register();
 
-        modEventBus.addListener(this::addCreative);
+        modEventBus.addListener(ChainTogather::addCreative);
 
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
     }
 
-    private void addCreative(BuildCreativeModeTabContentsEvent event) {
+    private static void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) event.accept(BINDING_CHAIN);
     }
 }

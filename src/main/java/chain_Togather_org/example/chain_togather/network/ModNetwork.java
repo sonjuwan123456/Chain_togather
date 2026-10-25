@@ -1,6 +1,6 @@
 package chain_Togather_org.example.chain_togather.network;
 
-import chain_Togather_org.example.chain_togather.Chain_togather;
+import chain_Togather_org.example.chain_togather.ChainTogather;
 import chain_Togather_org.example.chain_togather.Config;
 import chain_Togather_org.example.chain_togather.chain.ChainData;
 import net.minecraft.resources.ResourceLocation;
@@ -12,7 +12,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.SimpleChannel;
 
 public final class ModNetwork {
-    private static final SimpleChannel CHANNEL = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(Chain_togather.MODID, "main")).networkProtocolVersion(1).simpleChannel();
+    private static final SimpleChannel CHANNEL = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(ChainTogather.MODID, "main")).networkProtocolVersion(1).simpleChannel();
 
     private ModNetwork() {
     }

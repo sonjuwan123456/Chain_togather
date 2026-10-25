@@ -1,6 +1,6 @@
 package chain_Togather_org.example.chain_togather.client;
 
-import chain_Togather_org.example.chain_togather.Chain_togather;
+import chain_Togather_org.example.chain_togather.ChainTogather;
 import chain_Togather_org.example.chain_togather.chain.ChainLink;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = Chain_togather.MODID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = ChainTogather.MODID, value = Dist.CLIENT)
 public final class ChainRenderer {
     private ChainRenderer() {
     }

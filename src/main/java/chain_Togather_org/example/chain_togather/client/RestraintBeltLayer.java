@@ -1,6 +1,6 @@
 package chain_Togather_org.example.chain_togather.client;
 
-import chain_Togather_org.example.chain_togather.Chain_togather;
+import chain_Togather_org.example.chain_togather.ChainTogather;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
@@ -26,10 +26,10 @@ import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = Chain_togather.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = ChainTogather.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class RestraintBeltLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private static final ModelResourceLocation MODEL = new ModelResourceLocation(
-            ResourceLocation.fromNamespaceAndPath(Chain_togather.MODID, "entity/iron_belt"), "standalone");
+            ResourceLocation.fromNamespaceAndPath(ChainTogather.MODID, "entity/iron_belt"), "standalone");
 
     private static final float WAIST_Y = 10.5F;
     private static final float RING_DROP = 0.5F;

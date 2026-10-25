@@ -1,6 +1,6 @@
 package chain_Togather_org.example.chain_togather.chain;
 
-import chain_Togather_org.example.chain_togather.Chain_togather;
+import chain_Togather_org.example.chain_togather.ChainTogather;
 import chain_Togather_org.example.chain_togather.Config;
 import chain_Togather_org.example.chain_togather.item.ChainItem;
 import chain_Togather_org.example.chain_togather.network.ModNetwork;
@@ -37,7 +37,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.List;
 import java.util.Set;
 
-@Mod.EventBusSubscriber(modid = Chain_togather.MODID)
+@Mod.EventBusSubscriber(modid = ChainTogather.MODID)
 public final class ChainEvents {
     private static boolean sharingEffect;
     private static boolean dyingTogether;
@@ -48,7 +48,7 @@ public final class ChainEvents {
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (!event.getItemStack().is(Chain_togather.BINDING_CHAIN.get()) || !(event.getTarget() instanceof LivingEntity target)) return;
+        if (!event.getItemStack().is(ChainTogather.BINDING_CHAIN.get()) || !(event.getTarget() instanceof LivingEntity target)) return;
         event.setCanceled(true);
         if (event.getEntity() instanceof ServerPlayer self) {
             ChainItem.link(self, target);
