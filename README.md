@@ -98,4 +98,4 @@ deployModsDir=C:/Users/<사용자>/curseforge/minecraft/Instances/<인스턴스>
 
 ## 라이선스
 
-All Rights Reserved
+[MIT License](LICENSE)
