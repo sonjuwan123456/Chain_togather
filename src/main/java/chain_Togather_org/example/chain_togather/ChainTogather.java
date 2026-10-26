@@ -19,6 +19,7 @@ public class ChainTogather {
     public static final String MODID = "chain_togather";
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
 
+    public static final RegistryObject<Item> IRON_BAND = ITEMS.register("iron_band", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> BINDING_CHAIN = ITEMS.register("binding_chain", () -> new ChainItem(new Item.Properties().stacksTo(1)));
 
     public ChainTogather(FMLJavaModLoadingContext context) {
@@ -34,6 +35,7 @@ public class ChainTogather {
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) event.accept(IRON_BAND);
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) event.accept(BINDING_CHAIN);
     }
 }

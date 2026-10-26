@@ -1,5 +1,6 @@
 {
   "item.chain_togather.binding_chain": "Binding Chain",
+  "item.chain_togather.iron_band": "Iron Band",
   "tooltip.chain_togather.binding_chain": "Right-click another player to chain yourself to them",
   "message.chain_togather.linked": "You are now chained to %s",
   "message.chain_togather.already_linked": "You are already chained to %s",

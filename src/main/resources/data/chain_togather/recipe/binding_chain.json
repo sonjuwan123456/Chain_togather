@@ -1,11 +1,15 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "equipment",
-  "ingredients": [
-    { "item": "minecraft:chain" },
-    { "item": "minecraft:chain" },
-    { "item": "minecraft:lead" }
+  "pattern": [
+    "BCB",
+    " L "
   ],
+  "key": {
+    "B": { "item": "chain_togather:iron_band" },
+    "C": { "item": "minecraft:chain" },
+    "L": { "item": "minecraft:lead" }
+  },
   "result": {
     "id": "chain_togather:binding_chain",
     "count": 1

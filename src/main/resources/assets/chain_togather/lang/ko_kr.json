@@ -1,5 +1,6 @@
 {
   "item.chain_togather.binding_chain": "결속의 사슬",
+  "item.chain_togather.iron_band": "철 띠",
   "tooltip.chain_togather.binding_chain": "다른 플레이어를 우클릭하면 사슬로 연결됩니다",
   "message.chain_togather.linked": "%s 님과 사슬로 연결되었습니다",
   "message.chain_togather.already_linked": "이미 %s 님과 연결되어 있습니다",
