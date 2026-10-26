@@ -35,7 +35,7 @@ public final class RestraintBeltLayer extends RenderLayer<AbstractClientPlayer, 
 
     private static final float WAIST_Y = 10.5F;
     private static final float RING_DROP = 0.5F;
-    private static final float RING_BACK = 4.5F;
+    private static final float RING_BACK = 5.0F;
     private static final float ARMORED_SCALE = 1.2F;
 
     public RestraintBeltLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
